@@ -19,7 +19,6 @@ class Gem::SourceIndex::Tree
           gems
         end
       end
-    end
   end
 
   attr_reader :spec_dir
