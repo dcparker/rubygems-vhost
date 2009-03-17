@@ -50,7 +50,7 @@ class Gem::SourceIndex
   # specifications::
   #   [Hash] hash of [Gem name, Gem::Specification] pairs
   def initialize(gems_tree=nil)
-    @gems = gems_tree || Tree.new
+    @gems = Tree.new(gems_tree)
     @spec_dirs = nil
   end
 
@@ -96,8 +96,10 @@ class Gem::SourceIndex
     specs.sort_by { |s| s.sort_obj }
   end
 
-  def find_specs_by_name_and_version(name, version)
-    gems.values.select { |spec| spec.name =~ gem_pattern && version_requirement.satisfied_by?(spec.version) } || (@parent ? @parent.find_specs_by_name_and_version(name, version) : [])
+  def find_specs_by_name_and_version(gem_pattern, version_requirement)
+    found = gems.values.select { |spec| spec.name =~ gem_pattern && version_requirement.satisfied_by?(spec.version) }
+    found = (@parent ? @parent.find_specs_by_name_and_version(gem_pattern, version_requirement) : []) if found.empty?
+    found
   end
 
   def each(&block) # :yields: gem.full_name, gem

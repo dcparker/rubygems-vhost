@@ -1,8 +1,12 @@
 class Gem::SourceIndex::Tree
   include Enumerable
 
-  def initialize
-    refresh!
+  def initialize(from_tree=nil)
+    if from_tree
+      @hash = from_tree.instance_variable_get(:@hash)
+    else
+      refresh!
+    end
   end
 
   attr_reader :spec_dir
@@ -55,7 +59,9 @@ class Gem::SourceIndex::Tree
 
   def refresh!
     @hash = Hash.new do |h,spec_dir|
+      # puts "Loading specs from #{spec_dir}..."
       h[spec_dir] = Dir.glob(File.join(spec_dir, '*.gemspec')).inject({}) do |gems,spec_file|
+        # puts "\tspec #{spec_file}"
         if gemspec = Gem::SourceIndex.load_specification(spec_file.untaint)
           if Gem.freeze_list.has_key?(gemspec.name)
             version_requirement = Gem::Requirement.create Gem.freeze_list[gemspec.name]

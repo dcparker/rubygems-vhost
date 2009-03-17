@@ -1,1 +1,9 @@
+This extension to RubyGems adds the following capabilities:
+  1) Gems are loaded from the Gem Path in order. The first location in the path that encounters a gem by the called name
+      will answer the request for the latest version. If a specific version is asked for, each location will be searched
+      in order for the first match.
+  2) Freeze versions of gems for your app by running Gem.freeze(name, version). Or, use the built-in freeze list files:
+      frozen_gems.txt in the runtime directory, or .frozen_gems in your user home directory. In those files simply list
+      the gem names and version requirements to freeze to, like "merb-core =1.0.7.1"
+
 When installing this gem, the file operating_system.rb is placed into /path/to/rubygems/defaults/operating_system.
