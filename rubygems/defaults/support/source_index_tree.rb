@@ -5,10 +5,10 @@ class Gem::SourceIndex::Tree
     @hash = from_tree.is_a?(self.class) ?
       from_tree.instance_variable_get(:@hash) :
       Hash.new do |h,spec_dir|
-        puts "Loading specs from #{spec_dir}..."# if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
+        puts "Loading specs from #{spec_dir}..." if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
         h[spec_dir] = Dir.glob(File.join(spec_dir, '*.gemspec')).inject({}) do |gems,spec_file|
           if gemspec = Gem::SourceIndex.load_specification(spec_file.untaint)
-            puts "\tloaded #{gemspec.full_name}"# if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
+            puts "\tloaded #{gemspec.full_name}" if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
             if Gem.freeze_list.has_key?(gemspec.name)
               version_requirement = Gem::Requirement.create Gem.freeze_list[gemspec.name]
               gems[gemspec.full_name] = gemspec if version_requirement.satisfied_by? gemspec.version
