@@ -130,7 +130,7 @@ module Gem
 
     def activate(agem, *version_requirements)
       success = original_activate(agem, *version_requirements)
-      File.open('gems.log', 'a') {|f| f << "#{agem.inspect} - #{version_requirements.map {|vr| vr.to_s}.join(', ')}"} if success && Gem.freeze_list.has_key?('rubygems-vhost-logactivate')
+      File.open('gems.log', 'a') {|f| f << "#{agem.to_s} - #{version_requirements.map {|vr| vr.to_s}.join(', ')}\n"} if success && Gem.freeze_list.has_key?('rubygems-vhost-logactivate')
       success
     end
   end
