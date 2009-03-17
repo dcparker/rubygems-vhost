@@ -166,7 +166,7 @@ module Gem
 
     # Load dependent gems first
     spec.runtime_dependencies.each do |dep_gem|
-      $INDENT += "  "
+      $INDENT += " "
       activate dep_gem
       $INDENT.chop!
     end
