@@ -146,6 +146,7 @@ end
 
 # Now read the appropriate freeze files:
 
+puts "Using rubygems-#{Gem::RubyGemsVersion}, extended for vhosts by BehindLogic."
 ["#{Gem.user_home}/.frozen_gems", "./frozen_gems.txt"].each do |frozen_file|
   if File.exists?(frozen_file)
     gem_dependencies = File.read(frozen_file)
