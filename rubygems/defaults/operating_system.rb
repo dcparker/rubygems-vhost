@@ -97,8 +97,11 @@ class Gem::SourceIndex
   end
 
   def find_specs_by_name_and_version(gem_pattern, version_requirement)
+    puts "Looking for #{gem_pattern.inspect} at #{version_requirement.inspect} in #{spec_dirs.inspect}" if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
     found = gems.values.select { |spec| spec.name =~ gem_pattern && version_requirement.satisfied_by?(spec.version) }
-    found = (@parent ? @parent.find_specs_by_name_and_version(gem_pattern, version_requirement) : []) if found.empty?
+    if found.empty? || (gem_pattern == /^/i && version_requirement == Gem::Requirement.default) # if none found, or if we're listing all gems
+      found.concat(@parent ? @parent.find_specs_by_name_and_version(gem_pattern, version_requirement) : [])
+    end
     found
   end
 
@@ -198,6 +201,12 @@ module Gem
     return true
   end
 
+  def self.dir
+    @gem_home ||= nil
+    set_home(ENV['GEM_HOME'] || Gem.configuration.home || default_dir) unless @gem_home
+    @gem_home
+  end
+
   ##
   # Array of paths to search for Gems.
   # Hack adds gems directory within current directory, if it is present.
@@ -215,6 +224,7 @@ module Gem
       set_paths paths.compact.join(File::PATH_SEPARATOR)
     end
   
+    puts "Path: #{@gem_path.inspect}" if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
     @gem_path
   end
 end
@@ -228,7 +238,7 @@ puts "Using rubygems-#{Gem::RubyGemsVersion}, extended for vhosts by BehindLogic
     gem_dependencies.each_line do |line|
       name, version = line.split(/\s+/,2)
       if name && version
-        puts "Freezing rubygems to #{name} #{version}"
+        puts "Freezing rubygems to #{name} #{version}" if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
         Gem.freeze name, version
       end
     end
