@@ -125,14 +125,74 @@ module Gem
     freeze_list[name] = version
   end
 
-  class << self
-    alias :original_activate :activate
+  def self.activate(agem, *version_requirements)
+    $INDENT ||= ''
+    log = $log.nil? && Gem.freeze_list.has_key?('rubygems-vhost-logactivate') ? File.open('gems.log', 'a') : nil
+    $log ||= log
 
-    def activate(agem, *version_requirements)
-      success = original_activate(agem, *version_requirements)
-      File.open('gems.log', 'a') {|f| f << "#{agem.to_s} - #{version_requirements.map {|vr| vr.to_s}.join(', ')}\n"} if success && Gem.freeze_list.has_key?('rubygems-vhost-logactivate')
-      success
+    if version_requirements.empty? then
+      version_requirements = Gem::Requirement.default
     end
+
+    unless agem.respond_to?(:name) and
+           agem.respond_to?(:version_requirements) then
+      agem = Gem::Dependency.new(agem, version_requirements)
+    end
+    # $log << "#{$INDENT}Loading gem #{agem.name} #{agem.version_requirements}" if $log
+
+    matches = Gem.source_index.find_name(agem.name, agem.version_requirements)
+    report_activate_error(agem) if matches.empty?
+
+    if @loaded_specs[agem.name] then
+      # This gem is already loaded.  If the currently loaded gem is not in the
+      # list of candidate gems, then we have a version conflict.
+      existing_spec = @loaded_specs[agem.name]
+
+      unless matches.any? { |spec| spec.version == existing_spec.version } then
+        raise Gem::Exception,
+              "can't activate #{agem}, already activated #{existing_spec.full_name}"
+      end
+
+      return false
+    end
+
+    # new load
+    spec = matches.last
+    return false if spec.loaded?
+    $log << "#{$INDENT}Loaded '#{spec.name}' => '=#{spec.version}'\n" if $log
+
+    spec.loaded = true
+    @loaded_specs[spec.name] = spec
+
+    # Load dependent gems first
+    spec.runtime_dependencies.each do |dep_gem|
+      $INDENT += "  "
+      activate dep_gem
+      $INDENT.chop!
+    end
+
+    # bin directory must come before library directories
+    spec.require_paths.unshift spec.bindir if spec.bindir
+
+    require_paths = spec.require_paths.map do |path|
+      File.join spec.full_gem_path, path
+    end
+
+    sitelibdir = ConfigMap[:sitelibdir]
+
+    # gem directories must come after -I and ENV['RUBYLIB']
+    insert_index = load_path_insert_index
+
+    if insert_index then
+      # gem directories must come after -I and ENV['RUBYLIB']
+      $LOAD_PATH.insert(insert_index, *require_paths)
+    else
+      # we are probably testing in core, -I and RUBYLIB don't apply
+      $LOAD_PATH.unshift(*require_paths)
+    end
+
+    log.close if log
+    return true
   end
 
   ##
