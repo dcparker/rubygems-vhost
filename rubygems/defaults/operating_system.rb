@@ -127,8 +127,8 @@ module Gem
 
   def self.activate(agem, *version_requirements)
     $INDENT ||= ''
-    log = $log.nil? && Gem.freeze_list.has_key?('rubygems-vhost-logactivate') ? File.open('gems.log', 'a') : nil
-    $log ||= log
+    log = $vhost_log.nil? && Gem.freeze_list.has_key?('rubygems-vhost-logactivate') ? File.open('gems.log', 'a') : nil
+    $vhost_log ||= log
 
     if version_requirements.empty? then
       version_requirements = Gem::Requirement.default
@@ -159,7 +159,7 @@ module Gem
     # new load
     spec = matches.last
     return false if spec.loaded?
-    $log << "#{$INDENT}Loaded '#{spec.name}' => '=#{spec.version}'\n" if $log
+    $vhost_log << "#{$INDENT}Loaded '#{spec.name}' => '=#{spec.version}'\n" if $vhost_log
 
     spec.loaded = true
     @loaded_specs[spec.name] = spec
