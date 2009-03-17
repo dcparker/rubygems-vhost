@@ -2,7 +2,7 @@ class Gem::SourceIndex::Tree
   include Enumerable
 
   def initialize(from_tree=nil)
-    @hash = from_tree ?
+    @hash = from_tree.is_a?(self.class) ?
       from_tree.instance_variable_get(:@hash) :
       Hash.new do |h,spec_dir|
         puts "Loading specs from #{spec_dir}..." if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
