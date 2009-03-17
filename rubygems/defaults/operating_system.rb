@@ -125,6 +125,16 @@ module Gem
     freeze_list[name] = version
   end
 
+  class << self
+    alias :original_activate :activate
+
+    def activate(agem, *version_requirements)
+      success = original_activate(agem, *version_requirements)
+      File.open('gems.log', 'a') {|f| f << "#{agem.inspect} - #{version_requirements.map {|vr| vr.to_s}.join(', ')}"} if success && Gem.freeze_list.has_key?('rubygems-vhost-logactivate')
+      success
+    end
+  end
+
   ##
   # Array of paths to search for Gems.
   # Hack adds gems directory within current directory, if it is present.
