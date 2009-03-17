@@ -2,10 +2,23 @@ class Gem::SourceIndex::Tree
   include Enumerable
 
   def initialize(from_tree=nil)
-    if from_tree
-      @hash = from_tree.instance_variable_get(:@hash)
-    else
-      refresh!
+    @hash = from_tree ?
+      from_tree.instance_variable_get(:@hash) :
+      Hash.new do |h,spec_dir|
+        # puts "Loading specs from #{spec_dir}..."
+        h[spec_dir] = Dir.glob(File.join(spec_dir, '*.gemspec')).inject({}) do |gems,spec_file|
+          # puts "\tspec #{spec_file}"
+          if gemspec = Gem::SourceIndex.load_specification(spec_file.untaint)
+            if Gem.freeze_list.has_key?(gemspec.name)
+              version_requirement = Gem::Requirement.create Gem.freeze_list[gemspec.name]
+              gems[gemspec.full_name] = gemspec if version_requirement.satisfied_by? gemspec.version
+            else
+              gems[gemspec.full_name] = gemspec
+            end
+          end
+          gems
+        end
+      end
     end
   end
 
@@ -58,21 +71,8 @@ class Gem::SourceIndex::Tree
   end
 
   def refresh!
-    @hash = Hash.new do |h,spec_dir|
-      # puts "Loading specs from #{spec_dir}..."
-      h[spec_dir] = Dir.glob(File.join(spec_dir, '*.gemspec')).inject({}) do |gems,spec_file|
-        # puts "\tspec #{spec_file}"
-        if gemspec = Gem::SourceIndex.load_specification(spec_file.untaint)
-          if Gem.freeze_list.has_key?(gemspec.name)
-            version_requirement = Gem::Requirement.create Gem.freeze_list[gemspec.name]
-            gems[gemspec.full_name] = gemspec if version_requirement.satisfied_by? gemspec.version
-          else
-            gems[gemspec.full_name] = gemspec
-          end
-        end
-        gems
-      end
-    end
+    @hash.keys.each {|k| @hash.delete(k)}
+    true
   end
 
   # This is rather unstable. We're not really sure what you want to do in most cases... It should work though.
