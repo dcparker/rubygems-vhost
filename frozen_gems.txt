@@ -1,0 +1,2 @@
+extlib <= 0.9.8
+days_and_times > 0.0.1
