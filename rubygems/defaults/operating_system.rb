@@ -191,7 +191,10 @@ module Gem
       $LOAD_PATH.unshift(*require_paths)
     end
 
-    log.close if log
+    if log
+      log.close
+      $vhost_log = nil
+    end
     return true
   end
 
