@@ -8,13 +8,13 @@ class Gem::SourceIndex::Tree
         puts "Loading specs from #{spec_dir}..." if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
         h[spec_dir] = Dir.glob(File.join(spec_dir, '*.gemspec')).inject({}) do |gems,spec_file|
           if gemspec = Gem::SourceIndex.load_specification(spec_file.untaint)
-            puts "\tloaded #{gemspec.full_name}" if Gem.freeze_list.has_key?('rubygems-vhost-verbose')
             if Gem.freeze_list.has_key?(gemspec.name)
               version_requirement = Gem::Requirement.create Gem.freeze_list[gemspec.name]
               gems[gemspec.full_name] = gemspec if version_requirement.satisfied_by? gemspec.version
             else
               gems[gemspec.full_name] = gemspec
             end
+            puts "\tloaded spec #{gemspec.full_name}" if Gem.freeze_list.has_key?('rubygems-vhost-verbose') && gems[gemspec.full_name]
           end
           gems
         end
